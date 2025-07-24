@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  #PostgreSQL DB
+  postgres:
+    image: postgres:15-alpine
+    container_name: url-shortener-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: url_shortener
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - url-shortener-network
+
+  #Redis cache
+  redis:
+    image: redis:7-alpine
+    container_name: url-shortener-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - url-shortener-network
+
+  # Redis for Analytics
+  redis-analytics:
+    image: redis:7-alpine
+    container_name: url-shortener-analytics
+    restart: unless-stopped
+    ports:
+      - '6389:6379'
+    command: redis-server --port 6379 --appendonly yes
+    volumes:
+      - redis_analytics_data:/data
+    networks:
+      - url-shortener-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  redis_analytics_data:
+
+networks:
+  url-shortener-network:
+    driver: bridge
