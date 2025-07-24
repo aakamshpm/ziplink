@@ -1,0 +1,44 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// Counter table for unique ID generation
+model Counter {
+    id           String   @id @db.VarChar(20)
+    currentValue BigInt   @default(0) @map("current_value")
+    updatedAt    DateTime @default(now()) @map("updated_at")
+
+    @@map("counters")
+}
+
+// Main URLs table
+model Url {
+    id          BigInt   @id @default(autoincrement())
+    originalUrl String   @map("original_url") @db.Text
+    shortCode   String   @unique @map("short_code") @db.VarChar(7)
+    createdAt   DateTime @default(now()) @map("created_at")
+    clickCount  BigInt   @default(0) @map("click_count")
+    userId      String?  @map("user_id") @db.Uuid
+
+    @@index([shortCode])
+    @@index([userId])
+    @@index([createdAt])
+    @@map("urls")
+}
+
+// Users table
+model User {
+    id        String   @id @default(cuid()) @db.Uuid
+    email     String   @unique
+    password  String
+    name      String
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("users")
+}
