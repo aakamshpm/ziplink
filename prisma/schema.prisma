@@ -23,22 +23,8 @@ model Url {
     shortCode   String   @unique @map("short_code") @db.VarChar(7)
     createdAt   DateTime @default(now()) @map("created_at")
     clickCount  BigInt   @default(0) @map("click_count")
-    userId      String?  @map("user_id") @db.Uuid
 
     @@index([shortCode])
-    @@index([userId])
     @@index([createdAt])
     @@map("urls")
-}
-
-// Users table
-model User {
-    id        String   @id @default(cuid()) @db.Uuid
-    email     String   @unique
-    password  String
-    name      String
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
-
-    @@map("users")
 }
