@@ -17,4 +17,22 @@ export class CounterService {
       `Counter service initialized with batch size: ${this.batchSize}`,
     );
   }
+
+  async initializeCounter(startValue: bigint = 1000000n): Promise<void> {
+    try {
+      await this.prisma.counter.upsert({
+        where: { id: this.counterId },
+        update: {},
+        create: {
+          id: this.counterId,
+          currentValue: startValue,
+        },
+      });
+
+      this.logger.log(`Counter initialized with start value; ${startValue}`);
+    } catch (error) {
+      this.logger.log(`Failed to initialize counter: ${error}`);
+      throw error;
+    }
+  }
 }
