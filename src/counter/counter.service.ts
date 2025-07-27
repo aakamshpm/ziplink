@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Base62Util } from 'src/common/utils/base62.util';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -60,5 +61,20 @@ export class CounterService {
       this.logger.error(`Failed to allocate counter batch: ${error}`);
       throw new Error('Counter service unavailable');
     }
+  }
+
+  async getNextShortCode(): Promise<string> {
+    const nextId = await this.getNextId();
+    const shortCode = Base62Util.encode(nextId);
+
+    this.logger.log(`Generated short code: ${shortCode} for ID: ${nextId}`);
+    return shortCode;
+  }
+
+  async getNextId(): Promise<bigint> {
+    if (this.currentValue >= this.maxValue) await this.allocateBatch();
+
+    this.currentValue += 1n;
+    return this.currentValue;
   }
 }
