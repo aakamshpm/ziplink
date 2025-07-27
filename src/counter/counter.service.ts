@@ -35,4 +35,30 @@ export class CounterService {
       throw error;
     }
   }
+
+  private async allocateBatch(): Promise<void> {
+    try {
+      this.logger.log(`Allocating new batch of ${this.batchSize} IDs`);
+
+      const updatedCounter = await this.prisma.counter.update({
+        where: { id: this.counterId },
+        data: {
+          currentValue: {
+            increment: this.batchSize,
+          },
+          updatedAt: new Date(),
+        },
+      });
+
+      this.maxValue = updatedCounter.currentValue;
+      this.currentValue = this.maxValue - BigInt(this.batchSize);
+
+      this.logger.log(
+        `Batch allocated; ${this.currentValue + 1n} to {${this.maxValue}}`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to allocate counter batch: ${error}`);
+      throw new Error('Counter service unavailable');
+    }
+  }
 }
