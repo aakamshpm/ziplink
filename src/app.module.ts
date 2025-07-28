@@ -4,6 +4,7 @@ import databaseConfig from './config/database.config';
 import appConfig from './config/app.config';
 import { PrismaModule } from './prisma/prisma.module';
 import { CounterModule } from './counter/counter.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { CounterModule } from './counter/counter.module';
     PrismaModule,
     CounterModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule {}
