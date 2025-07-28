@@ -77,4 +77,24 @@ export class CounterService {
     this.currentValue += 1n;
     return this.currentValue;
   }
+
+  async getCounterStats(): Promise<{
+    currentDbValue: bigint;
+    memoryValue: bigint;
+    maxValue: bigint;
+    batchSize: number;
+    remainingInBatch: number;
+  }> {
+    const counter = await this.prisma.counter.findUnique({
+      where: { id: this.counterId },
+    });
+
+    return {
+      currentDbValue: counter?.currentValue || 0n,
+      memoryValue: this.currentValue,
+      maxValue: this.maxValue,
+      batchSize: this.batchSize,
+      remainingInBatch: Number(this.maxValue - this.currentValue),
+    };
+  }
 }
