@@ -5,6 +5,7 @@ import appConfig from './config/app.config';
 import { PrismaModule } from './prisma/prisma.module';
 import { CounterModule } from './counter/counter.module';
 import { AppController } from './app.controller';
+import { UrlModule } from './url/url.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AppController } from './app.controller';
     }),
     PrismaModule,
     CounterModule,
+    UrlModule,
   ],
   controllers: [AppController],
   providers: [],
