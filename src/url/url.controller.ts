@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   UsePipes,
   ValidationPipe,
@@ -27,6 +29,19 @@ export class UrlController {
       success: true,
       data: result,
       message: 'URL shortened successfully',
+    };
+  }
+
+  @Delete('delete')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteUrl(@Param('shortCode') shortCode: string): Promise<{
+    success: true;
+    message: string;
+  }> {
+    await this.urlService.deleteUrl(shortCode);
+    return {
+      success: true,
+      message: `Short code ${shortCode} deleted.`,
     };
   }
 }

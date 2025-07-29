@@ -56,7 +56,7 @@ export class UrlService {
     }
   }
 
-  async deleteUrl(shortCode: string): Promise<{ message: string }> {
+  async deleteUrl(shortCode: string): Promise<void> {
     try {
       const url = await this.prisma.url.findUnique({
         where: { shortCode },
@@ -68,8 +68,6 @@ export class UrlService {
         where: { shortCode },
       });
       this.logger.log(`Deleted short URL: ${shortCode}`);
-
-      return { message: `Short code ${shortCode} deleted` };
     } catch (error) {
       this.logger.error(
         `Failed to delete short URL: ${shortCode}`,
