@@ -56,6 +56,29 @@ export class UrlService {
     }
   }
 
+  async deleteUrl(shortCode: string): Promise<{ message: string }> {
+    try {
+      const url = await this.prisma.url.findUnique({
+        where: { shortCode },
+      });
+      if (!url) {
+        throw new BadRequestException('Short URL not found');
+      }
+      await this.prisma.url.delete({
+        where: { shortCode },
+      });
+      this.logger.log(`Deleted short URL: ${shortCode}`);
+
+      return { message: `Short code ${shortCode} deleted` };
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete short URL: ${shortCode}`,
+        error.stack,
+      );
+      throw new BadRequestException('Failed to delete short URL');
+    }
+  }
+
   private async findExistingUrl(originalUrl: string) {
     return this.prisma.url.findFirst({
       where: { originalUrl },
