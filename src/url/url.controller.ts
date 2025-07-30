@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -10,7 +11,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { UrlService } from './url.service';
-import { CreateUrlDto, UrlResponseDto } from './create-url.dto';
+import { CreateUrlDto, UrlResponseDto, UrlStatsDto } from './create-url.dto';
 
 @Controller('api/urls')
 @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
@@ -29,6 +30,21 @@ export class UrlController {
       success: true,
       data: result,
       message: 'URL shortened successfully',
+    };
+  }
+
+  @Get('stats/:shortCode')
+  async getUrlStats(@Param('shortCode') shortCode: string): Promise<{
+    success: true;
+    data: UrlStatsDto;
+    message: string;
+  }> {
+    const data = await this.urlService.getUrlStats(shortCode);
+
+    return {
+      success: true,
+      data: data,
+      message: 'Url Stats fetched',
     };
   }
 

@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { CounterService } from 'src/counter/counter.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateUrlDto, UrlResponseDto } from './create-url.dto';
+import { CreateUrlDto, UrlResponseDto, UrlStatsDto } from './create-url.dto';
 
 @Injectable()
 export class UrlService {
@@ -50,6 +50,26 @@ export class UrlService {
         throw error;
       }
       throw new BadRequestException('Failed to create short URL');
+    }
+  }
+
+  async getUrlStats(shortCode: string): Promise<UrlStatsDto> {
+    try {
+      const url = await this.prisma.url.findUnique({ where: { shortCode } });
+
+      if (!url) throw new BadRequestException('Short URL not found');
+
+      return {
+        shortCode: url.shortCode,
+        originalUrl: url.originalUrl,
+        clickCount: Number(url.clickCount),
+        createdAt: url.createdAt,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to fetch stats for ${shortCode}: ${error}`);
+      if (error instanceof HttpException) throw error;
+
+      throw new BadRequestException('Failed to fetch stats ');
     }
   }
 
