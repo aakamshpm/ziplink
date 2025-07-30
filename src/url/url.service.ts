@@ -1,6 +1,6 @@
 import {
   BadRequestException,
-  ConflictException,
+  HttpException,
   Injectable,
   Logger,
 } from '@nestjs/common';
@@ -46,10 +46,7 @@ export class UrlService {
       this.logger.error(
         `Failed to create short url for ${originalUrl}: ${error}`,
       );
-      if (
-        error instanceof ConflictException ||
-        error instanceof BadRequestException
-      ) {
+      if (error instanceof HttpException) {
         throw error;
       }
       throw new BadRequestException('Failed to create short URL');
@@ -73,6 +70,9 @@ export class UrlService {
         `Failed to delete short URL: ${shortCode}`,
         error.stack,
       );
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new BadRequestException('Failed to delete short URL');
     }
   }

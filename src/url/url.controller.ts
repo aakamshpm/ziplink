@@ -32,7 +32,7 @@ export class UrlController {
     };
   }
 
-  @Delete('delete')
+  @Delete('delete/:shortCode')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteUrl(@Param('shortCode') shortCode: string): Promise<{
     success: true;
