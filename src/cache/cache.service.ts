@@ -3,6 +3,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import Redis from 'ioredis';
 import { Cache } from 'cache-manager';
 import { ConfigService } from '@nestjs/config';
+import { tryCatch } from 'bullmq';
 
 export interface CachedUrl {
   originalUrl: string;
@@ -57,6 +58,15 @@ export class CacheService implements OnModuleDestroy {
       );
     } catch (error) {
       this.logger.error(`Cache SET error for ${shortCode}: ${error}`);
+    }
+  }
+
+  // Remove URL from cache
+  async deleteUrl(shortCode: string): Promise<void> {
+    try {
+      await this.cacheManager.del(`url:${shortCode}`);
+    } catch (error) {
+      this.logger.error(`Cache delete error for ${shortCode}: ${error}`);
     }
   }
 }
