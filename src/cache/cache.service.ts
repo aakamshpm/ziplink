@@ -24,4 +24,15 @@ export class CacheService implements OnModuleDestroy {
   async onModuleDestroy() {
     await this.analyticsRedis.quit();
   }
+
+  //   Get URL from cache
+  async getUrl(shortCode: string): Promise<CachedUrl | null> {
+    try {
+      const result = await this.cacheManager.get<CachedUrl>(`url:${shortCode}`);
+      return result ?? null;
+    } catch (error) {
+      this.logger.error(`Cache GET error for ${shortCode}: ${error}`);
+      return null;
+    }
+  }
 }
