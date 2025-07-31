@@ -69,4 +69,24 @@ export class CacheService implements OnModuleDestroy {
       this.logger.error(`Cache delete error for ${shortCode}: ${error}`);
     }
   }
+
+  // === Click Counting ===
+
+  // Increment click count for each url
+  async incrementClickCount(shortCode: string): Promise<number> {
+    try {
+      const key = `clicks:${shortCode}`;
+      const newCount = await this.analyticsRedis.incr(key);
+
+      await this.analyticsRedis.expire(
+        key,
+        this.configService.get<number>('redis.ttl.clicks')!,
+      );
+
+      return newCount;
+    } catch (error) {
+      this.logger.error(`Click increment error for ${shortCode}: ${error}`);
+      return 0;
+    }
+  }
 }
