@@ -35,4 +35,28 @@ export class CacheService implements OnModuleDestroy {
       return null;
     }
   }
+
+  // Cache a URL
+  async setUrl(shortCode: string, originalUrl: string): Promise<void> {
+    try {
+      const ttl = this.configService.get<number>('redis.ttl.urls');
+      if (typeof ttl !== 'number') {
+        this.logger.warn('TTL for URLs is not set. Using default of 60 second');
+        await this.cacheManager.set(
+          `url:${shortCode}`,
+          { originalUrl },
+          60 * 1000,
+        );
+        return;
+      }
+
+      await this.cacheManager.set(
+        `url:${shortCode}`,
+        { originalUrl },
+        ttl * 1000,
+      );
+    } catch (error) {
+      this.logger.error(`Cache SET error for ${shortCode}: ${error}`);
+    }
+  }
 }
