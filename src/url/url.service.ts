@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { CounterService } from 'src/counter/counter.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUrlDto, UrlResponseDto, UrlStatsDto } from './create-url.dto';
+import { CacheService } from 'src/cache/cache.service';
 
 @Injectable()
 export class UrlService {
@@ -17,6 +18,7 @@ export class UrlService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly counterService: CounterService,
+    private readonly cacheService: CacheService,
     private readonly configService: ConfigService,
   ) {
     this.baseUrl = this.configService.get<string>('app.baseUrl')!;
@@ -40,6 +42,10 @@ export class UrlService {
           shortCode,
         },
       });
+
+      // Cache the URL
+      await this.cacheService.setUrl(shortCode, originalUrl);
+
       this.logger.log(`Created short URL: ${shortCode} for ${originalUrl}`);
       return this.formatUrlResponse(url);
     } catch (error) {
