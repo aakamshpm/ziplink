@@ -26,7 +26,6 @@ export class CacheService implements OnModuleDestroy {
     await this.analyticsRedis.quit();
   }
 
-  //   Get URL from cache
   async getUrl(shortCode: string): Promise<CachedUrl | null> {
     try {
       const result = await this.cacheManager.get<CachedUrl>(`url:${shortCode}`);
@@ -60,8 +59,6 @@ export class CacheService implements OnModuleDestroy {
       this.logger.error(`Cache SET error for ${shortCode}: ${error}`);
     }
   }
-
-  // Remove URL from cache
   async deleteUrl(shortCode: string): Promise<void> {
     try {
       await this.cacheManager.del(`url:${shortCode}`);
@@ -70,9 +67,6 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
-  // === Click Counting ===
-
-  // Increment click count for each url
   async incrementClickCount(shortCode: string): Promise<number> {
     try {
       const key = `clicks:${shortCode}`;
@@ -87,6 +81,29 @@ export class CacheService implements OnModuleDestroy {
     } catch (error) {
       this.logger.error(`Click increment error for ${shortCode}: ${error}`);
       return 0;
+    }
+  }
+
+  async getAllClickCounts(): Promise<Map<string, number>> {
+    try {
+      const keys = await this.analyticsRedis.keys('clicks:*');
+      if (keys.length === 0) return new Map();
+
+      const values = await this.analyticsRedis.mget(...keys);
+      const clickCounts = new Map<string, number>();
+
+      keys.forEach((key, index) => {
+        const shortCode = key.replace('clicks:', '');
+        const count = values[index] ? parseInt(values[index], 10) : 0;
+        if (count > 0) {
+          clickCounts.set(shortCode, count);
+        }
+      });
+
+      return clickCounts;
+    } catch (error) {
+      this.logger.error('Get all click counts error:', error);
+      return new Map();
     }
   }
 }
