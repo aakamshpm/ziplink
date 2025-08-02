@@ -93,8 +93,9 @@ export class CacheService implements OnModuleDestroy {
       const clickCounts = new Map<string, number>();
 
       keys.forEach((key, index) => {
-        const shortCode = key.replace('clicks:', '');
+        const shortCode = key.replace('click:', '');
         const count = values[index] ? parseInt(values[index], 10) : 0;
+
         if (count > 0) {
           clickCounts.set(shortCode, count);
         }
@@ -105,5 +106,15 @@ export class CacheService implements OnModuleDestroy {
       this.logger.error('Get all click counts error:', error);
       return new Map();
     }
+  }
+
+  // this function is used to clear click counts from cache after flushing the data to DB
+  async clearClickCounts(shortCodes: string[]): Promise<void> {
+    try {
+      if (shortCodes.length === 0) return;
+
+      const keys = shortCodes.map((code) => `clicks:${code}`);
+      await this.analyticsRedis.del(...keys);
+    } catch (error) {}
   }
 }
