@@ -3,9 +3,10 @@ import { CounterModule } from 'src/counter/counter.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { UrlController } from './url.controller';
 import { UrlService } from './url.service';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
-  imports: [PrismaModule, CounterModule],
+  imports: [PrismaModule, CounterModule, CacheModule],
   controllers: [UrlController],
   providers: [UrlService],
   exports: [UrlService],
