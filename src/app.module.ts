@@ -7,6 +7,7 @@ import { CounterModule } from './counter/counter.module';
 import { AppController } from './app.controller';
 import { UrlModule } from './url/url.module';
 import { CacheModule } from './cache/cache.module';
+import { RedirectModule } from './redirect/redirect.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { CacheModule } from './cache/cache.module';
     CounterModule,
     UrlModule,
     CacheModule,
+    RedirectModule,
   ],
   controllers: [AppController],
   providers: [],
