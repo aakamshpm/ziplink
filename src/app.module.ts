@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { CounterModule } from './counter/counter.module';
 import { AppController } from './app.controller';
 import { UrlModule } from './url/url.module';
+import { CacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UrlModule } from './url/url.module';
     PrismaModule,
     CounterModule,
     UrlModule,
+    CacheModule,
   ],
   controllers: [AppController],
   providers: [],
