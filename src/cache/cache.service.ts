@@ -1,8 +1,8 @@
-import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import Redis from 'ioredis';
-import { Cache } from 'cache-manager';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import Redis from 'ioredis';
+import Keyv from 'keyv';
+import KeyvRedis from '@keyv/redis';
 
 export interface CachedUrl {
   originalUrl: string;
@@ -12,22 +12,29 @@ export interface CachedUrl {
 export class CacheService implements OnModuleDestroy {
   private readonly logger = new Logger(CacheService.name);
   private analyticsRedis: Redis;
+  private urlCache: Keyv;
 
-  constructor(
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private readonly configService: ConfigService,
-  ) {
-    const analyticsConfig = this.configService.get('redis.analytics');
-    this.analyticsRedis = new Redis(analyticsConfig);
+  constructor(private readonly configService: ConfigService) {
+    // Analytics Redis (port 6380)
+    const analyticsConfig = configService.get('redis.analytics');
+    this.analyticsRedis = new Redis({
+      host: analyticsConfig.host,
+      port: analyticsConfig.port,
+      db: analyticsConfig.db || 0,
+    });
 
-    // Debug logs
-    const cacheConfig = this.configService.get('redis.cache');
+    // URL Cache with Keyv (port 6379)
+    const cacheConfig = configService.get('redis.cache');
+    const redisUrl = `redis://${cacheConfig.host}:${cacheConfig.port}/${cacheConfig.db || 0}`;
+    this.urlCache = new Keyv(new KeyvRedis(redisUrl));
+
+    this.urlCache.opts.ttl = configService.get('redis.ttl.urls') * 1000;
 
     this.logger.log(
-      `URL Cache Redis: ${cacheConfig.host!}:${cacheConfig.port!}`,
+      `URL Cache (Keyv): ${cacheConfig.host}:${cacheConfig.port}`,
     );
     this.logger.log(
-      `Analytics Redis: ${analyticsConfig.host!}:${analyticsConfig.port!}`,
+      `Analytics Redis: ${analyticsConfig.host}:${analyticsConfig.port}`,
     );
   }
 
@@ -37,65 +44,63 @@ export class CacheService implements OnModuleDestroy {
 
   async getUrl(shortCode: string): Promise<CachedUrl | null> {
     try {
-      const result = await this.cacheManager.get<CachedUrl>(`url:${shortCode}`);
+      const key = `url:${shortCode}`;
+      const result = await this.urlCache.get(key);
+
+      this.logger.debug(`Cache GET ${key} = ${result ? 'HIT' : 'MISS'}`);
       return result ?? null;
     } catch (error) {
-      this.logger.error(`Cache GET error for ${shortCode}: ${error}`);
+      this.logger.error(`Cache GET error for ${shortCode}:`, error);
       return null;
     }
   }
 
-  // Cache a URL
   async setUrl(shortCode: string, originalUrl: string): Promise<void> {
     try {
-      this.logger.log(`ATTEMPTING TO CACHE: url:${shortCode} = ${originalUrl}`);
+      const key = `url:${shortCode}`;
+      const ttl = this.configService.get<number>('redis.ttl.urls')! * 1000;
+      const cacheData: CachedUrl = { originalUrl };
 
-      const ttl = this.configService.get<number>('redis.ttl.urls');
-      if (typeof ttl !== 'number') {
-        this.logger.warn('TTL for URLs is not set. Using default of 60 second');
-        await this.cacheManager.set(
-          `url:${shortCode}`,
-          { originalUrl },
-          60 * 1000,
-        );
-        this.logger.log('Stored in cache: ', shortCode);
-        return;
+      this.logger.debug(`Setting cache: ${key} with TTL ${ttl}ms`);
+
+      // Use Keyv directly with TTL
+      await this.urlCache.set(key, cacheData, ttl);
+
+      const verification = await this.urlCache.get(key);
+      if (verification) {
+        this.logger.log(`Successfully cached ${key}`);
+      } else {
+        this.logger.error(`Failed to verify cache for ${key}`);
       }
-
-      await this.cacheManager.set(
-        `url:${shortCode}`,
-        { originalUrl },
-        ttl * 1000,
-      );
     } catch (error) {
-      this.logger.error(`Cache SET error for ${shortCode}: ${error}`);
+      this.logger.error(`Cache SET error for ${shortCode}:`, error);
     }
   }
+
   async deleteUrl(shortCode: string): Promise<void> {
     try {
-      await this.cacheManager.del(`url:${shortCode}`);
+      const key = `url:${shortCode}`;
+      await this.urlCache.delete(key);
+      this.logger.debug(`Cache DELETE ${key}`);
     } catch (error) {
-      this.logger.error(`Cache delete error for ${shortCode}: ${error}`);
+      this.logger.error(`Cache delete error for ${shortCode}:`, error);
     }
   }
 
-  // Analytics Redis
+  // ===== CLICK ANALYTICS (Port 6380 via Redis) =====
 
   async incrementClickCount(shortCode: string): Promise<number> {
     try {
       const key = `clicks:${shortCode}`;
       const newCount = await this.analyticsRedis.incr(key);
 
-      this.logger.log(`Count for ${shortCode} incremented to ${newCount}`);
+      const ttl = this.configService.get<number>('redis.ttl.clicks');
+      await this.analyticsRedis.expire(key, Number(ttl));
 
-      await this.analyticsRedis.expire(
-        key,
-        this.configService.get<number>('redis.ttl.clicks')!,
-      );
-
+      this.logger.debug(`Analytics INCREMENT ${key} = ${newCount}`);
       return newCount;
     } catch (error) {
-      this.logger.error(`Click increment error for ${shortCode}: ${error}`);
+      this.logger.error(`Click increment error for ${shortCode}:`, error);
       return 0;
     }
   }
@@ -124,13 +129,15 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
-  // this function is used to clear click counts from cache after flushing the data to DB
   async clearClickCounts(shortCodes: string[]): Promise<void> {
     try {
       if (shortCodes.length === 0) return;
 
       const keys = shortCodes.map((code) => `clicks:${code}`);
       await this.analyticsRedis.del(...keys);
-    } catch (error) {}
+      this.logger.debug(`Cleared ${shortCodes.length} click count keys`);
+    } catch (error) {
+      this.logger.error('Clear click counts error:', error);
+    }
   }
 }

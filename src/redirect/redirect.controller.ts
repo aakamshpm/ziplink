@@ -25,6 +25,7 @@ export class RedirectController {
       let cached = await this.cacheService.getUrl(shortCode);
 
       if (!cached) {
+        this.logger.log('URL not found in cache... checking in DB instead');
         const url = await this.prisma.url.findUnique({ where: { shortCode } });
         if (!url) {
           this.logger.warn(`Short code not found ${shortCode}`);

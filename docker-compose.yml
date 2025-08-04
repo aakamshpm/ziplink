@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
     ports:
       - '6380:6379'
-    command: redis-server --port 6379 --appendonly yes
+    command: redis-server --appendonly yes
     volumes:
       - redis_analytics_data:/data
     networks:
