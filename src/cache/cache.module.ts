@@ -16,7 +16,7 @@ import { CacheService } from './cache.service';
         return {
           store: new Keyv({
             store: new KeyvRedis(redisConfig),
-            namespace: 'cache',
+            namespace: 'urlcache',
           }),
           ttl: configService.get('redis.ttl.urls') * 1000,
         };

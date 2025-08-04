@@ -8,12 +8,13 @@ import { AppController } from './app.controller';
 import { UrlModule } from './url/url.module';
 import { CacheModule } from './cache/cache.module';
 import { RedirectModule } from './redirect/redirect.module';
+import redisConfig from './config/redis.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, appConfig],
+      load: [databaseConfig, appConfig, redisConfig],
     }),
     PrismaModule,
     CounterModule,

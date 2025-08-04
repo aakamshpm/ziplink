@@ -5,7 +5,6 @@ export default registerAs('redis', () => ({
   cache: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT!) || 6379,
-    password: process.env.REDIS_PASSWORD || undefined,
     db: 0,
   },
 
@@ -13,7 +12,6 @@ export default registerAs('redis', () => ({
   analytics: {
     host: process.env.REDIS_ANALYTICS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_ANALYTICS_PORT!) || 6380,
-    password: process.env.REDIS_ANALYTICS_PASSWORD || undefined,
     db: 0,
   },
 

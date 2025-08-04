@@ -3,7 +3,6 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import Redis from 'ioredis';
 import { Cache } from 'cache-manager';
 import { ConfigService } from '@nestjs/config';
-import { tryCatch } from 'bullmq';
 
 export interface CachedUrl {
   originalUrl: string;
@@ -18,8 +17,18 @@ export class CacheService implements OnModuleDestroy {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly configService: ConfigService,
   ) {
-    const redisConfig = this.configService.get('redis.analytics');
-    this.analyticsRedis = new Redis(redisConfig);
+    const analyticsConfig = this.configService.get('redis.analytics');
+    this.analyticsRedis = new Redis(analyticsConfig);
+
+    // Debug logs
+    const cacheConfig = this.configService.get('redis.cache');
+
+    this.logger.log(
+      `URL Cache Redis: ${cacheConfig.host!}:${cacheConfig.port!}`,
+    );
+    this.logger.log(
+      `Analytics Redis: ${analyticsConfig.host!}:${analyticsConfig.port!}`,
+    );
   }
 
   async onModuleDestroy() {
@@ -39,6 +48,8 @@ export class CacheService implements OnModuleDestroy {
   // Cache a URL
   async setUrl(shortCode: string, originalUrl: string): Promise<void> {
     try {
+      this.logger.log(`ATTEMPTING TO CACHE: url:${shortCode} = ${originalUrl}`);
+
       const ttl = this.configService.get<number>('redis.ttl.urls');
       if (typeof ttl !== 'number') {
         this.logger.warn('TTL for URLs is not set. Using default of 60 second');
@@ -47,6 +58,7 @@ export class CacheService implements OnModuleDestroy {
           { originalUrl },
           60 * 1000,
         );
+        this.logger.log('Stored in cache: ', shortCode);
         return;
       }
 
@@ -67,10 +79,14 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
+  // Analytics Redis
+
   async incrementClickCount(shortCode: string): Promise<number> {
     try {
       const key = `clicks:${shortCode}`;
       const newCount = await this.analyticsRedis.incr(key);
+
+      this.logger.log(`Count for ${shortCode} incremented to ${newCount}`);
 
       await this.analyticsRedis.expire(
         key,
@@ -93,7 +109,7 @@ export class CacheService implements OnModuleDestroy {
       const clickCounts = new Map<string, number>();
 
       keys.forEach((key, index) => {
-        const shortCode = key.replace('click:', '');
+        const shortCode = key.replace('clicks:', '');
         const count = values[index] ? parseInt(values[index], 10) : 0;
 
         if (count > 0) {
