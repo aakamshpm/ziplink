@@ -35,7 +35,7 @@ services:
     container_name: url-shortener-analytics
     restart: unless-stopped
     ports:
-      - '6389:6379'
+      - '6380:6379'
     command: redis-server --port 6379 --appendonly yes
     volumes:
       - redis_analytics_data:/data
