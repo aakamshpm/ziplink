@@ -23,7 +23,9 @@ export class AnalyticsService {
       const clickCounts = await this.cache.getAllClickCounts();
 
       if (clickCounts.size === 0) {
-        this.logger.debug(`No click data to flush at ${Date.now()}`);
+        this.logger.debug(
+          `No click data to flush at ${new Date().toISOString()}`,
+        );
         return;
       }
 

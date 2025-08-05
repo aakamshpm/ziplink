@@ -6,11 +6,11 @@ import { PrismaModule } from './prisma/prisma.module';
 import { CounterModule } from './counter/counter.module';
 import { AppController } from './app.controller';
 import { UrlModule } from './url/url.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { CacheModule } from './cache/cache.module';
 import { RedirectModule } from './redirect/redirect.module';
 import redisConfig from './config/redis.config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
