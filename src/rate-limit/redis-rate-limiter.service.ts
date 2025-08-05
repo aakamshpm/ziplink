@@ -21,4 +21,70 @@ export class RedisRateLimiterService {
       this.logger.error(`Rate Limiter Redis connectione error: ${err}`);
     });
   }
+  async checkRateLimit(
+    ip: string,
+    limit: number,
+    windowSeconds: number,
+    keyPrefix: string = 'rate_limit',
+  ): Promise<{
+    allowed: boolean;
+    remainingRequests: number;
+    resetTime: number;
+    totalHits: number;
+  }> {
+    const key = `${keyPrefix}:${ip}`;
+    const now = Date.now();
+    const windowStart = now - windowSeconds * 1000;
+
+    try {
+      const pipeline = this.redis.pipeline();
+
+      pipeline.zremrangebyscore(key, 0, windowStart);
+
+      pipeline.zadd(key, now, now);
+
+      pipeline.zcard(key);
+
+      pipeline.expire(key, windowSeconds);
+
+      const results = await pipeline.exec();
+
+      if (!results || results.some(([err]) => err)) {
+        this.logger.error('Redis piperline error in rate limiting');
+
+        return {
+          allowed: true,
+          remainingRequests: limit - 1,
+          resetTime: now + windowSeconds * 1000,
+          totalHits: 1,
+        };
+      }
+
+      const totalHits = results[2][1] as number;
+      const allowed = totalHits <= limit;
+      const remainingRequests = Math.max(0, limit - totalHits);
+      const resetTime = now + windowSeconds * 1000;
+
+      if (!allowed) {
+        this.logger.error(
+          `Rate limit exceeded for IP ${ip}: ${totalHits}/${limit} requests`,
+        );
+      }
+
+      return {
+        allowed,
+        remainingRequests,
+        resetTime,
+        totalHits,
+      };
+    } catch (error) {
+      this.logger.error('Rate limiting check failed:', error);
+      return {
+        allowed: true,
+        remainingRequests: limit - 1,
+        resetTime: now + windowSeconds * 1000,
+        totalHits: 1,
+      };
+    }
+  }
 }
