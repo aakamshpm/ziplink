@@ -9,6 +9,8 @@ import { UrlModule } from './url/url.module';
 import { CacheModule } from './cache/cache.module';
 import { RedirectModule } from './redirect/redirect.module';
 import redisConfig from './config/redis.config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -16,10 +18,12 @@ import redisConfig from './config/redis.config';
       isGlobal: true,
       load: [databaseConfig, appConfig, redisConfig],
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     CounterModule,
     UrlModule,
     CacheModule,
+    AnalyticsModule,
     RedirectModule,
   ],
   controllers: [AppController],
