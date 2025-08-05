@@ -87,4 +87,23 @@ export class RedisRateLimiterService {
       };
     }
   }
+
+  async getRateLimitStatus(
+    ip: string,
+    keyPrefix: string = 'rate_limit',
+  ): Promise<{
+    count: number;
+    ttl: number;
+  }> {
+    const key = `${keyPrefix}:${ip}`;
+
+    try {
+      const count = await this.redis.zcard(key);
+      const ttl = await this.redis.ttl(key);
+      return { count, ttl };
+    } catch (error) {
+      this.logger.error('Failed to get rate limit status:', error);
+      return { count: 0, ttl: -1 };
+    }
+  }
 }
