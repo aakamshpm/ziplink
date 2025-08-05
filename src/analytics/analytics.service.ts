@@ -20,7 +20,44 @@ export class AnalyticsService {
     this.logger.log('Starting analytics flush to database...');
 
     try {
-    } catch (error) {}
+      const clickCounts = await this.cache.getAllClickCounts();
+
+      if (clickCounts.size === 0) {
+        this.logger.debug(`No click data to flush at ${Date.now()}`);
+        return;
+      }
+
+      this.logger.log(`Found ${clickCounts.size} URLs with click data`);
+
+      const batchSize = 50;
+      const shortCodes = Array.from(clickCounts.keys());
+      let totalProcessed = 0;
+      let totalErrors = 0;
+
+      for (let i = 0; i < shortCodes.length; i += batchSize) {
+        const batch = shortCodes.slice(i, i + batchSize);
+
+        const { processed, errors } = await this.processBatch(
+          batch,
+          clickCounts,
+        );
+
+        totalProcessed += processed;
+        totalErrors += errors;
+      }
+
+      if (totalProcessed > 0) {
+        const processedCodes = shortCodes.slice(0, totalProcessed);
+        await this.cache.clearClickCounts(processedCodes);
+      }
+
+      const duration = Date.now() - Number(startTime);
+      this.logger.log(
+        `Analytics flush completed: ${totalProcessed} processed, ${totalErrors} errors in ${duration}ms`,
+      );
+    } catch (error) {
+      this.logger.error(`Analytics flush failed: ${error}`);
+    }
   }
 
   private async processBatch(
