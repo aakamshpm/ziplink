@@ -33,25 +33,26 @@ export class AnalyticsService {
       const shortCodes = Array.from(clickCounts.keys());
       let totalProcessed = 0;
       let totalErrors = 0;
+      let allProcessedCodes: string[] = [];
 
       for (let i = 0; i < shortCodes.length; i += batchSize) {
         const batch = shortCodes.slice(i, i + batchSize);
 
-        const { processed, errors } = await this.processBatch(
+        const { processed, errors, processedCodes } = await this.processBatch(
           batch,
           clickCounts,
         );
 
         totalProcessed += processed;
         totalErrors += errors;
+        allProcessedCodes.push(...processedCodes);
       }
 
-      if (totalProcessed > 0) {
-        const processedCodes = shortCodes.slice(0, totalProcessed);
-        await this.cache.clearClickCounts(processedCodes);
+      if (allProcessedCodes.length > 0) {
+        await this.cache.clearClickCounts(allProcessedCodes);
       }
 
-      const duration = Date.now() - Number(startTime);
+      const duration = Date.now() - startTime.getTime();
       this.logger.log(
         `Analytics flush completed: ${totalProcessed} processed, ${totalErrors} errors in ${duration}ms`,
       );
@@ -63,9 +64,10 @@ export class AnalyticsService {
   private async processBatch(
     shortCodes: string[],
     clickCounts: Map<string, number>,
-  ): Promise<{ processed: number; errors: number }> {
+  ): Promise<{ processed: number; errors: number; processedCodes: string[] }> {
     let processed = 0;
     let errors = 0;
+    const processedCodes: string[] = [];
 
     for (const shortCode of shortCodes) {
       try {
@@ -93,12 +95,13 @@ export class AnalyticsService {
         });
 
         processed++;
+        processedCodes.push(shortCode);
         this.logger.debug(`Updated ${shortCode}: ${clickCount} clicks`);
       } catch (error) {
         this.logger.error(`Error processing ${shortCode}:`, error);
         errors++;
       }
     }
-    return { processed, errors };
+    return { processed, errors, processedCodes };
   }
 }
