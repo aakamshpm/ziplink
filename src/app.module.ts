@@ -11,6 +11,7 @@ import { CacheModule } from './cache/cache.module';
 import { RedirectModule } from './redirect/redirect.module';
 import redisConfig from './config/redis.config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { RateLimitModule } from './rate-limit/rate-limit.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     UrlModule,
     CacheModule,
     AnalyticsModule,
+    RateLimitModule,
     RedirectModule,
   ],
   controllers: [AppController],
