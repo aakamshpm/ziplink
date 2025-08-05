@@ -7,19 +7,28 @@ import {
   HttpStatus,
   Param,
   Post,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { UrlService } from './url.service';
 import { CreateUrlDto, UrlResponseDto, UrlStatsDto } from './create-url.dto';
+import { RateLimit, RateLimitGuard } from 'src/rate-limit/rate-limit.guard';
 
 @Controller('api/urls')
+@UseGuards(RateLimitGuard)
 @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
 export class UrlController {
   constructor(private readonly urlService: UrlService) {}
 
   @Post('shorten')
   @HttpCode(HttpStatus.CREATED)
+  @RateLimit({
+    limit: 10,
+    windowSeconds: 60,
+    keyPrefix: 'shorten',
+    message: 'Too many URL shortening requests. Please try again in a minute.',
+  })
   async createShortUrl(@Body() createURlDto: CreateUrlDto): Promise<{
     success: boolean;
     data: UrlResponseDto;
