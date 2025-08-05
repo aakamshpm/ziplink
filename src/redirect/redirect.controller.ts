@@ -5,12 +5,15 @@ import {
   NotFoundException,
   Param,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { CacheService } from 'src/cache/cache.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RateLimit, RateLimitGuard } from 'src/rate-limit/rate-limit.guard';
 
 @Controller()
+@UseGuards(RateLimitGuard)
 export class RedirectController {
   private readonly logger = new Logger(RedirectController.name);
 
@@ -20,6 +23,12 @@ export class RedirectController {
   ) {}
 
   @Get(':shortCode')
+  @RateLimit({
+    limit: 100,
+    windowSeconds: 60,
+    keyPrefix: 'redirect',
+    message: 'Too many redirect requests. Please try again in a minute.',
+  })
   async redirect(@Param('shortCode') shortCode: string, @Res() res: Response) {
     try {
       let cached = await this.cacheService.getUrl(shortCode);
