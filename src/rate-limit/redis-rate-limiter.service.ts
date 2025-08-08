@@ -8,17 +8,25 @@ export class RedisRateLimiterService {
   private redis: Redis;
 
   constructor(private configService: ConfigService) {
-    const redisUrl = this.configService.get<string>('redis.analytics');
+    const redisConfig = this.configService.get('redis.analytics');
 
-    if (typeof redisUrl !== 'string') {
-      this.logger.error('Redis URL not string');
-      return;
+    if (!redisConfig) {
+      this.logger.error('Redis analytics configuration not found');
+      throw new Error('Redis analytics configuration not found');
     }
 
-    this.redis = new Redis(redisUrl);
+    this.redis = new Redis({
+      host: redisConfig.host,
+      port: redisConfig.port,
+      db: redisConfig.db || 0,
+    });
+
+    this.redis.on('connect', () => {
+      this.logger.log('Rate Limiter Redis connected successfully');
+    });
 
     this.redis.on('error', (err) => {
-      this.logger.error(`Rate Limiter Redis connectione error: ${err}`);
+      this.logger.error(`Rate Limiter Redis connection error: ${err}`);
     });
   }
   async checkRateLimit(
