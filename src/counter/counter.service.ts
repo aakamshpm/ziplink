@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Base62Util } from 'src/common/utils/base62.util';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
-export class CounterService {
+export class CounterService implements OnModuleInit {
   private readonly logger = new Logger(CounterService.name);
 
   // In-memory cache
@@ -17,6 +17,10 @@ export class CounterService {
     this.logger.log(
       `Counter service initialized with batch size: ${this.batchSize}`,
     );
+  }
+
+  async onModuleInit() {
+    await this.initializeCounter(1000000n);
   }
 
   async initializeCounter(startValue: bigint = 1000000n): Promise<void> {
