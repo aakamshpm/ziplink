@@ -11,7 +11,9 @@ import { Response } from 'express';
 import { CacheService } from 'src/cache/cache.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RateLimit, RateLimitGuard } from 'src/rate-limit/rate-limit.guard';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('redirect')
 @Controller()
 @UseGuards(RateLimitGuard)
 export class RedirectController {
@@ -23,6 +25,24 @@ export class RedirectController {
   ) {}
 
   @Get(':shortCode')
+  @ApiOperation({ summary: 'Redirect to the original URL using a short code' })
+  @ApiParam({
+    name: 'shortCode',
+    description: 'Short code to redirect',
+    example: 'abc123',
+  })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirects to the original URL',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Short code not found',
+  })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many redirect requests',
+  })
   @RateLimit({
     limit: 100,
     windowSeconds: 60,
