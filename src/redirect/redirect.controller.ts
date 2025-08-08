@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  HttpCode,
   Logger,
   NotFoundException,
   Param,
@@ -24,6 +25,13 @@ export class RedirectController {
     private readonly prisma: PrismaService,
   ) {}
 
+  @Get('favicon.ico')
+  @HttpCode(204)
+  ignoreFavicon() {
+    // No content; avoids 404 logs from browsers requesting /favicon.ico
+  }
+
+  // Only match Base62 codes of reasonable length
   @Get(':shortCode')
   @ApiOperation({ summary: 'Redirect to the original URL using a short code' })
   @ApiParam({
@@ -50,6 +58,16 @@ export class RedirectController {
     message: 'Too many redirect requests. Please try again in a minute.',
   })
   async redirect(@Param('shortCode') shortCode: string, @Res() res: Response) {
+    // Validate shortCode format (Base62, length 4-12)
+    if (
+      !shortCode ||
+      shortCode.length < 4 ||
+      shortCode.length > 12 ||
+      !/^[0-9A-Za-z]+$/.test(shortCode)
+    ) {
+      this.logger.warn(`Invalid short code format: ${shortCode}`);
+      throw new NotFoundException('Short url not found');
+    }
     try {
       let cached = await this.cacheService.getUrl(shortCode);
 
