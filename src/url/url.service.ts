@@ -28,9 +28,24 @@ export class UrlService {
     const { originalUrl } = createUrlDto;
 
     try {
-      const existingUrl = await this.findExistingUrl(originalUrl);
+      const urlWithoutSlash = originalUrl.endsWith('/')
+        ? originalUrl.slice(0, -1)
+        : originalUrl;
+      const urlWithSlash = urlWithoutSlash + '/';
+
+      const existingUrl = await this.prisma.url.findFirst({
+        where: {
+          originalUrl: {
+            in: [urlWithoutSlash, urlWithSlash],
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
       if (existingUrl) {
-        this.logger.log(`Returning existing short URL for: ${originalUrl}`);
+        this.logger.log(
+          `Returning existing short URL for: ${originalUrl} (found: ${existingUrl.originalUrl})`,
+        );
         return this.formatUrlResponse(existingUrl);
       }
 
@@ -101,13 +116,6 @@ export class UrlService {
       }
       throw new BadRequestException('Failed to delete short URL');
     }
-  }
-
-  private async findExistingUrl(originalUrl: string) {
-    return this.prisma.url.findFirst({
-      where: { originalUrl },
-      orderBy: { createdAt: 'desc' },
-    });
   }
 
   private formatUrlResponse(url: any): UrlResponseDto {
