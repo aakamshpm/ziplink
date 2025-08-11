@@ -15,8 +15,12 @@ async function bootstrap() {
     }),
   );
 
+  // Read allowed origins from environment variable (comma-separated)
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map((origin) =>
+    origin.trim(),
+  );
   app.enableCors({
-    origin: ['http://localhost:4200'],
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: false,
