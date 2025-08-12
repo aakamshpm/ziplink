@@ -48,9 +48,11 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT ?? 3000;
+  const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
+
   await app.listen(port);
-  console.log(`Server is running on http://localhost:${port}`);
-  console.log(`API Documentation: http://localhost:${port}/api-docs`);
-  console.log(`OpenAPI JSON: http://localhost:${port}/api-json`);
+  console.log(`Server is running on ${baseUrl}`);
+  console.log(`API Documentation: ${baseUrl}/api-docs`);
+  console.log(`OpenAPI JSON: ${baseUrl}/api-json`);
 }
 bootstrap();
