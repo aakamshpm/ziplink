@@ -15,34 +15,56 @@ export class CacheService implements OnModuleDestroy {
   private urlCache: Keyv;
 
   constructor(private readonly configService: ConfigService) {
-    // Analytics Redis (port 6380)
+    // Analytics Redis - use direct URL if available, fallback to individual config
     const analyticsConfig = configService.get('redis.analytics');
-    this.analyticsRedis = new Redis({
-      host: analyticsConfig.host,
-      port: analyticsConfig.port,
-      db: analyticsConfig.db || 0,
-      password: analyticsConfig.password,
-      family: 0,
-    });
 
-    // URL Cache with Keyv (port 6379)
+    if (analyticsConfig.url) {
+      const urlWithFamily = analyticsConfig.url.includes('?')
+        ? `${analyticsConfig.url}&family=0`
+        : `${analyticsConfig.url}?family=0`;
+
+      this.analyticsRedis = new Redis(urlWithFamily, {
+        family: 0,
+        ...(analyticsConfig.tls ? { tls: {} } : {}),
+      });
+    } else {
+      // Fallback to individual config (for local development)
+      this.analyticsRedis = new Redis({
+        host: analyticsConfig.host,
+        port: analyticsConfig.port,
+        db: analyticsConfig.db || 0,
+        password: analyticsConfig.password,
+        family: 0,
+      });
+    }
+
+    // URL Cache with Keyv - use direct URL if available
     const cacheConfig = configService.get('redis.cache');
 
-    let redisUrl = `redis://`;
-    if (cacheConfig.password) {
-      redisUrl += `:${cacheConfig.password}@`;
+    let redisUrl: string;
+    if (cacheConfig.url) {
+      // Use Railway's direct Redis URL
+      redisUrl = cacheConfig.url.includes('?')
+        ? `${cacheConfig.url}&family=0`
+        : `${cacheConfig.url}?family=0`;
+    } else {
+      // Fallback to constructing URL from individual config (for local development)
+      redisUrl = `redis://`;
+      if (cacheConfig.password) {
+        redisUrl += `:${cacheConfig.password}@`;
+      }
+      redisUrl += `${cacheConfig.host}:${cacheConfig.port}/${cacheConfig.db || 0}?family=0`;
     }
-    redisUrl += `${cacheConfig.host}:${cacheConfig.port}/${cacheConfig.db || 0}`;
 
     this.urlCache = new Keyv(new KeyvRedis(redisUrl));
 
     this.urlCache.opts.ttl = configService.get('redis.ttl.urls') * 1000;
 
     this.logger.log(
-      `URL Cache (Keyv): ${cacheConfig.host}:${cacheConfig.port}`,
+      `URL Cache (Keyv): ${cacheConfig.url || `${cacheConfig.host}:${cacheConfig.port}`}`,
     );
     this.logger.log(
-      `Analytics Redis: ${analyticsConfig.host}:${analyticsConfig.port}`,
+      `Analytics Redis: ${analyticsConfig.url || `${analyticsConfig.host}:${analyticsConfig.port}`}`,
     );
   }
 
