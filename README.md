@@ -8,7 +8,7 @@ This project was created as a learning journey in system design and backend scal
 ## 🚀 What is this?
 
 This is a production-style backend API for shortening long URLs into compact, shareable codes (think `bit.ly` or `tinyurl`).  
-While there are many similar projects, this one is crafted to demonstrate proven, real-world backend strategies for scalability, speed, and reliability.
+More than a simple clone, this project demonstrates modern, real-world backend strategies for scalability, speed, and reliability.
 
 ---
 
@@ -94,15 +94,24 @@ We use Docker Compose to run PostgreSQL and **two Redis instances** (one for cac
 ## 🧩 Example API Usage
 
 - **Shorten a URL:**  
-  `POST /api/shorten`  
-  `{ "url": "https://example.com" }`
+  `POST /api/urls/shorten`  
+  `{ "originalUrl": "https://example.com" }`
 
 - **Redirect:**  
-  `GET /:code`  
+  `GET /:shortCode`  
   (e.g., `/abc123` redirects to the original URL)
 
-- **Analytics:**  
-  (Custom endpoints for stats, see API docs)
+- **Get analytics:**  
+  `GET /api/urls/stats/{shortCode}`
+
+- **Delete a short URL:**  
+  `DELETE /api/urls/delete/{shortCode}`
+
+- **API Docs:**  
+  Interactive Swagger docs available at:
+  ```
+  http://localhost:3000/api-docs
+  ```
 
 ---
 
