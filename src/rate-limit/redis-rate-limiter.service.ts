@@ -16,7 +16,7 @@ export class RedisRateLimiterService {
       username?: string;
       password?: string;
       tls?: boolean;
-    }>('redis.analytics');
+    }>('redis.cache');
 
     if (!redisConfig) {
       this.logger.error('Redis analytics configuration not found');
