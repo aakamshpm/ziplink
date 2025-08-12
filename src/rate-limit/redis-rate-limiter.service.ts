@@ -16,7 +16,7 @@ export class RedisRateLimiterService {
       username?: string;
       password?: string;
       tls?: boolean;
-    }>('redis.cache');
+    }>('redis.analytics');
 
     if (!redisConfig) {
       this.logger.error('Redis analytics configuration not found');
@@ -28,11 +28,16 @@ export class RedisRateLimiterService {
       enableReadyCheck: true,
       retryStrategy: (times) => Math.min(times * 500, 5000),
       reconnectOnError: () => true,
+      family: 0,
     };
 
     let endpoint = '';
     if (redisConfig.url) {
-      // Support URL, e.g. rediss://default:pass@host:6379
+      // Support URL with dual stack lookup
+      const urlWithFamily = redisConfig.url.includes('?')
+        ? `${redisConfig.url}&family=0`
+        : `${redisConfig.url}?family=0`;
+
       if (redisConfig.tls) {
         (opts as any).tls = {}; // enable TLS
       }

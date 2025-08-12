@@ -22,6 +22,7 @@ export class CacheService implements OnModuleDestroy {
       port: analyticsConfig.port,
       db: analyticsConfig.db || 0,
       password: analyticsConfig.password,
+      family: 0,
     });
 
     // URL Cache with Keyv (port 6379)
