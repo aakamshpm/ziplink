@@ -23,5 +23,8 @@ export default registerAs('redis', () => ({
     tls: process.env.REDIS_ANALYTICS_TLS === 'true',
   },
 
-  ttl: {},
+  ttl: {
+    urls: parseInt(process.env.REDIS_TTL_URLS || '3600', 10), // 1 hour default
+    clicks: parseInt(process.env.REDIS_TTL_CLICKS || '86400', 10), // 24 hours default
+  },
 }));
