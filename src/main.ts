@@ -3,6 +3,12 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Request, Response } from 'express';
+import { webcrypto } from 'crypto';
+
+// Polyfill for crypto.randomUUID in older Node.js versions
+if (!global.crypto) {
+  global.crypto = webcrypto as any;
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
