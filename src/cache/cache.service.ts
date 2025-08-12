@@ -21,11 +21,18 @@ export class CacheService implements OnModuleDestroy {
       host: analyticsConfig.host,
       port: analyticsConfig.port,
       db: analyticsConfig.db || 0,
+      password: analyticsConfig.password,
     });
 
     // URL Cache with Keyv (port 6379)
     const cacheConfig = configService.get('redis.cache');
-    const redisUrl = `redis://${cacheConfig.host}:${cacheConfig.port}/${cacheConfig.db || 0}`;
+
+    let redisUrl = `redis://`;
+    if (cacheConfig.password) {
+      redisUrl += `:${cacheConfig.password}@`;
+    }
+    redisUrl += `${cacheConfig.host}:${cacheConfig.port}/${cacheConfig.db || 0}`;
+
     this.urlCache = new Keyv(new KeyvRedis(redisUrl));
 
     this.urlCache.opts.ttl = configService.get('redis.ttl.urls') * 1000;
