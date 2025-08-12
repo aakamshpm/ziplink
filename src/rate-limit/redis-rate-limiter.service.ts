@@ -41,7 +41,7 @@ export class RedisRateLimiterService {
       if (redisConfig.tls) {
         (opts as any).tls = {}; // enable TLS
       }
-      this.redis = new Redis(redisConfig.url, opts);
+      this.redis = new Redis(urlWithFamily, opts);
       endpoint = redisConfig.url.replace(/(:\/\/)(.*)@/, '$1****@'); // mask
     } else {
       this.redis = new Redis({

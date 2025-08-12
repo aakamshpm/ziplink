@@ -3,6 +3,7 @@ import { registerAs } from '@nestjs/config';
 export default registerAs('redis', () => ({
   // Cache for URL lookups
   cache: {
+    url: process.env.REDIS_URL,
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
     db: parseInt(process.env.REDIS_DB || '0', 10),
@@ -13,6 +14,7 @@ export default registerAs('redis', () => ({
 
   // Analytics (rate limiting, click buffers)
   analytics: {
+    url: process.env.REDIS_ANALYTICS_URL,
     host: process.env.REDIS_ANALYTICS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_ANALYTICS_PORT || '6380', 10),
     db: parseInt(process.env.REDIS_ANALYTICS_DB || '0', 10),
@@ -21,8 +23,5 @@ export default registerAs('redis', () => ({
     tls: process.env.REDIS_ANALYTICS_TLS === 'true',
   },
 
-  ttl: {
-    urls: parseInt(process.env.REDIS_TTL_URLS || '3600', 10), // 1 hour
-    clicks: parseInt(process.env.REDIS_TTL_CLICKS || '86400', 10), // 24 hours
-  },
+  ttl: {},
 }));
