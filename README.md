@@ -58,7 +58,7 @@ We use Docker Compose to run PostgreSQL and **two Redis instances** (one for cac
 1. **Start the infrastructure (Postgres + Redis)**
 
    ```bash
-   docker-compose -f docker-compose2.yml up -d
+   docker-compose -f docker-compose.yml up -d
    ```
 
    This launches:
