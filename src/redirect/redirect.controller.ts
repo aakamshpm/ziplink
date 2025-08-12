@@ -12,7 +12,13 @@ import { Response } from 'express';
 import { CacheService } from 'src/cache/cache.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RateLimit, RateLimitGuard } from 'src/rate-limit/rate-limit.guard';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiExcludeEndpoint,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('redirect')
 @Controller()
@@ -27,6 +33,7 @@ export class RedirectController {
 
   @Get('favicon.ico')
   @HttpCode(204)
+  @ApiExcludeEndpoint()
   ignoreFavicon() {
     // No content; avoids 404 logs from browsers requesting /favicon.ico
   }

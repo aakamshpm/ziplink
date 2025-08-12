@@ -27,11 +27,11 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle('URL shortener API')
+    .setTitle('Zip Link')
     .setDescription('A scalable URL shortener service')
     .setVersion('1.0')
     .addTag('urls')
-    .addTag('analytics')
+    .addTag('redirect')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
