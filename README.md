@@ -117,7 +117,7 @@ We use Docker Compose to run PostgreSQL and **two Redis instances** (one for cac
 
 ## 🌐 Live Demo
 
-_Coming soon!_
+[Zip Link](https://ziplink-demo.vercel.app)
 
 ---
 
